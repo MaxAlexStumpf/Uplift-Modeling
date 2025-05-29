@@ -9,9 +9,11 @@ def uplift_by_decile(
 ) -> pd.DataFrame:
     
     df = df.copy()
-    df['__decile_tmp__'] = pd.qcut(df[uplift_col], q=n_bins, labels=False, duplicates='drop')
-    df['decile'] = (df['__decile_tmp__'].max() - df['__decile_tmp__']).astype(int)
-    df.drop(columns='__decile_tmp__', inplace=True)
+    """
+    create deciles based on percentile rank (thus even the tree is forced to 10 deciles)
+    """
+    df['rank'] = df[uplift_col].rank(method='first', ascending=False)
+    df['decile'] = pd.cut(df['rank'], bins=n_bins, labels=False, include_lowest=True)
     
     unique_treats = df[treat_col].unique()
     if 'treatment' in unique_treats and 'control' in unique_treats:
