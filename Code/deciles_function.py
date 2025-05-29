@@ -13,11 +13,19 @@ def uplift_by_decile(
     df['decile'] = (df['__decile_tmp__'].max() - df['__decile_tmp__']).astype(int)
     df.drop(columns='__decile_tmp__', inplace=True)
     
+    unique_treats = df[treat_col].unique()
+    if 'treatment' in unique_treats and 'control' in unique_treats:
+        treat_val, control_val = 'treatment', 'control'
+    elif 1 in unique_treats and 0 in unique_treats:
+        treat_val, control_val = 1, 0
+    else:
+        raise ValueError(f"Unexpected treatment values: {unique_treats}")
+    
     records = []
     for d in sorted(df['decile'].unique()):
         group = df[df['decile'] == d]
-        treated = group[group[treat_col] == 1]
-        control = group[group[treat_col] == 0]
+        treated = group[group[treat_col] == treat_val]
+        control = group[group[treat_col] == control_val]
         
         treated_rate = treated[outcome_col].mean() if len(treated) > 0 else float('nan')
         control_rate = control[outcome_col].mean() if len(control) > 0 else float('nan')
